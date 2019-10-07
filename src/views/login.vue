@@ -3,10 +3,10 @@
     <div class="container">
       <img src="../assets/avatar.jpg" alt class="avatar" />
       <el-form :model="ruleForm" :rules="rules" ref="ruleForm" class="demo-ruleForm">
-        <el-form-item prop="name">
+        <el-form-item prop="username">
           <el-input placeholder="请输入用户名" prefix-icon="myicon-user" v-model="ruleForm.username"></el-input>
         </el-form-item>
-        <el-form-item prop="pwd">
+        <el-form-item prop="password">
           <el-input
             type="password"
             placeholder="请输入密码"
@@ -22,6 +22,8 @@
   </div>
 </template>
 <script>
+// 导入login的请求接口
+import { login } from "@/api/login_index.js";
 export default {
   data() {
     return {
@@ -29,11 +31,51 @@ export default {
         username: "",
         password: ""
       },
+      // rules的字段和ruleForm的字段保持一致
       rules: {
-        name: [{ required: true, message: "请输入用户名", trigger: "blur" }],
-        pwd: [{ required: true, message: "请输入密码", trigger: "blur" }]
+        username: [
+          { required: true, message: "请输入用户名", trigger: "blur" }
+        ],
+        password: [{ required: true, message: "请输入密码", trigger: "blur" }]
       }
     };
+  },
+  methods: {
+    submitForm(formName) {
+      this.$refs[formName].validate(valid => {
+        if (valid) {
+          // 校验成功
+          login(this.ruleForm)
+            .then(res => {
+              if (res.data.meta.status === 200) {
+                // 将token存储到本地
+                localStorage.setItem("icast_manager_37", res.data.data.token);
+                // 登录成功，进行路由的跳转
+                this.$router.push({ name: "home" });
+              } else {
+                this.$message({
+                  message: res.data.meta.msg,
+                  type: "warning"
+                });
+              }
+            })
+            .catch(res => {
+              this.$message({
+                message: "服务器异常，请稍后再试",
+                type: "warning"
+              });
+            });
+        } else {
+          // 校验失败
+          this.$message({
+            // 提示信息
+            message: "请输入所有的必填数据",
+            type: "warning"
+          });
+          return false;
+        }
+      });
+    }
   }
 };
 </script>
